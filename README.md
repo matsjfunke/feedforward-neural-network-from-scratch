@@ -1,6 +1,6 @@
 Check out my notes on:
-- [Single Neurons](./notes/single-neuron.pdf)
-- [Neural Networks (multi-layer perceptron)](./notes/neural-networks.pdf)
+- [Single Neurons & activation functions](./notes/single-neuron.pdf)
+- [Neural Networks (multi-layer perceptron) & walkthrough handwirting interpretation](./notes/neural-networks.pdf)
 - [learning (hill-climb & gradient descent](./notes/learning-optimization.pdf)
 
 
