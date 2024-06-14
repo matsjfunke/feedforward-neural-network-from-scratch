@@ -144,6 +144,14 @@ def L_model_forward(X, parameters):
 
 
 # 4. cost calculation
+def compute_cost(predicted_output, truth):
+    example_count = truth.shape[1]
+    cost = (-1 / example_count) * np.sum(np.multiply(truth, np.log(predicted_output)) + np.multiply(1 - truth, np.log(1 - predicted_output)))
+    print("cost = " + str(cost))
+    return cost
+PO = np.array([[0.8, 0.4, 0.6]])
+T = np.array([[1, 0, 1]])
+compute_cost(PO, T)
 
 
 # 5. backward propagation
