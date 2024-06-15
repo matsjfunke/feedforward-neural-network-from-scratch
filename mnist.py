@@ -8,6 +8,9 @@ import pandas as pd  # data processing, CSV file I/O (e.g. pd.read_csv)
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 
+
+layers_dims = [784, 128, 64, 10]  # Example: 784 inputs, two hidden layers with 128 and 64 units, and 10 output units
+
 # 1. data loading
 # The labeled training dataset consists of 42000 images, each of size 28x28 = 784 pixels. Labels are from 0 to 9 for pixelbrightness
 train_data = pd.read_csv("./input/train.csv")
@@ -149,9 +152,6 @@ def compute_cost(predicted_output, truth):
     cost = (-1 / example_count) * np.sum(np.multiply(truth, np.log(predicted_output)) + np.multiply(1 - truth, np.log(1 - predicted_output)))
     print("cost = " + str(cost))
     return cost
-PO = np.array([[0.8, 0.4, 0.6]])
-T = np.array([[1, 0, 1]])
-compute_cost(PO, T)
 
 
 # 5. backward propagation
@@ -173,3 +173,71 @@ def relu_gradient(activation_fn_gradient, cache):
 
     assert (linear_transformation_gradient.shape == Z.shape)
     return linear_transformation_gradient
+
+
+def softmax_gradient(Z, cache):
+    Z = cache
+    label_count = 10
+    linear_transformation_gradient = np.zeros((42000, label_count))
+    Z = np.transpose(Z)
+    for row in range(0, 42000):
+        denominator = (np.sum(np.exp(Z[row, :]))) * (np.sum(np.exp(Z[row, :])))
+        for col in range(0, 10):
+            sums = 0
+            for j in range(0, 10):
+                if (j != col):
+                    sums = sums+(math.exp(Z[row, j]))
+
+            linear_transformation_gradient[row, col] = (math.exp(Z[row, col]) * sums) / denominator
+    linear_transformation_gradient = np.transpose(linear_transformation_gradient)
+    Z = np.transpose(Z)
+
+    assert (linear_transformation_gradient.shape == Z.shape)
+    return linear_transformation_gradient
+
+
+# Computes the linear part of a layer's backward propagation
+def linear_backward(linear_transformation_gradient, cache):
+    A_prev, W, b = cache
+    training_examples = A_prev.shape[1]
+
+    gradient_W = 1. / training_examples * np.dot(linear_transformation_gradient, A_prev.T)
+    gradient_b = (1 / training_examples) * np.sum(linear_transformation_gradient, axis=1, keepdims=True)
+    dA_prev = np.dot(W.T, linear_transformation_gradient)  # gradient of the cost with respect to the activations of the previous layer
+    return dA_prev, gradient_W, gradient_b
+
+
+# computes gradients for the combined linear and activation part of a single layer
+    # using the linear_backward function and the derivations of activation functions (relu, sigmoid, softmax)
+def linear_activation_backward(dA, cache, activation):
+    linear_cache, activation_cache = cache
+    if activation == "relu":
+        dZ = relu_gradient(dA, activation_cache)
+        dA_prev, gradient_W, gradient_b = linear_backward(dZ, linear_cache)
+    elif activation == "sigmoid":
+        dZ = sigmoid_gradient(dA, activation_cache)
+        dA_prev, gradient_W, gradient_b = linear_backward(dZ, linear_cache)
+    elif activation == "softmax":
+        dZ = softmax_gradient(dA, activation_cache)
+        dA_prev, gradient_W, gradient_b = linear_backward(dZ, linear_cache)
+    return dA_prev, gradient_W, gradient_b
+
+
+# computes gradients for all layers in the model
+    # by chaining linear_activation_backward for each layer during backpropagation
+def model_backward_propagation(AL, truth, caches):
+    grads = {}
+    layer_count = len(caches)  # This is the same as len(layers_dims) - 1
+    dAL = - (np.divide(truth, AL) - np.divide(1 - truth, 1 - AL))
+    M = len(layers_dims)  # Total number of layers including input layer
+    current_cache = caches[M - 2]
+    grads["dA" + str(M - 1)], grads["dW" + str(M - 1)], grads["db" + str(M - 1)] = linear_activation_backward(dAL, current_cache, activation="softmax")
+
+    for layer in reversed(range(layer_count-1)):
+        current_cache = caches[layer]
+        dA_prev_temp, dW_temp, db_temp = linear_activation_backward(grads["dA" + str(layer + 2)], current_cache, activation="relu")
+        grads["dA" + str(layer + 1)] = dA_prev_temp
+        grads["dW" + str(layer + 1)] = dW_temp
+        grads["db" + str(layer + 1)] = db_temp
+
+    return grads
