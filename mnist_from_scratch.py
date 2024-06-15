@@ -1,15 +1,11 @@
 """
 matsjfunke
 """
-import os
 import math
 import numpy as np  # linear algebra
 import pandas as pd  # data processing, CSV file I/O (e.g. pd.read_csv)
-import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 
-
-layers_dims = [784, 128, 64, 10]  # Example: 784 inputs, two hidden layers with 128 and 64 units, and 10 output units
 
 # 1. data loading
 # The labeled training dataset consists of 42000 images, each of size 28x28 = 784 pixels. Labels are from 0 to 9 for pixelbrightness
@@ -266,7 +262,7 @@ def plot_graph(cost_plot):
 # 10. defining structure of neural network -> adjust layers_dims for different shapes
 
 # function to call sub_functions
-def run_neural_net(X, Y, layers_dims, learning_rate, max_iterations, tolerance):
+def train_neural_net(X, Y, layers_dims, learning_rate, max_iterations, tolerance):
     print("training...")
     cost_plot = np.zeros(max_iterations)
     parameters = initialize_parameters_deep(layers_dims)
@@ -295,5 +291,8 @@ def run_neural_net(X, Y, layers_dims, learning_rate, max_iterations, tolerance):
 layers_dims = [784, 500, 400, 300, 100, 10]  # n-layer model (n=6 including input and output layer)
 # first hidden layer has 500 nodes, second hiden layer has 400 nodes
 
-parameters = run_neural_net(train_data, train_label, layers_dims, learning_rate=0.0005, max_iterations=30, tolerance=1e-6)
+parameters = train_neural_net(train_data, train_label, layers_dims, learning_rate=0.0005, max_iterations=3, tolerance=1e-6)
 # variable parameter in network learning_rate, max_iterations, tolerance
+
+
+# 11. test & plot prediction accuracy of neural network
