@@ -1,6 +1,7 @@
 """
 matsjfunke
 """
+import zipfile
 import math
 import numpy as np  # linear algebra
 import pandas as pd  # data processing CSV file
@@ -9,6 +10,9 @@ import matplotlib.pyplot as plt
 
 # 1. load data
 # The labeled training dataset consists of 42000 images, each of size 28x28 = 784 pixels. Labels are from 0 to 9 for pixelbrightness
+zip_file_path = './input/train.csv.zip'
+with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+    zip_ref.extract('train.csv', path="./input")
 train_data = pd.read_csv("./input/train.csv")
 
 # separating labels and pixels

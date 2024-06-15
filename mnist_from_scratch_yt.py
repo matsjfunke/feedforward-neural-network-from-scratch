@@ -3,14 +3,20 @@ matsjfunke
 
 credit https://youtu.be/w8yWXqWQYmU?si=2DmUAwDRi9NTRz7O
 """
+import zipfile
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
 # Load the dataset
+zip_file_path = './input/train.csv.zip'
+with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+    zip_ref.extract('train.csv', path="./input")
+
 data = pd.read_csv("./input/train.csv")
 data = np.array(data)
 m, n = data.shape
+
 
 # data preparation
 np.random.shuffle(data)  # Shuffle the dataset
