@@ -7,10 +7,9 @@ import pandas as pd  # data processing, CSV file I/O (e.g. pd.read_csv)
 import matplotlib.pyplot as plt
 
 
-# 1. data loading
+# 1. load data
 # The labeled training dataset consists of 42000 images, each of size 28x28 = 784 pixels. Labels are from 0 to 9 for pixelbrightness
 train_data = pd.read_csv("./input/train.csv")
-test_data = pd.read_csv("./input/test.csv")
 
 # separating labels and pixels
 train_labels = np.array(train_data.loc[:, 'label'])
@@ -19,8 +18,8 @@ train_data = np.array(train_data.loc[:, train_data.columns != 'label'])
 
 # 2. data visualization
 # input number visualization.
-index = 7  # change  index to view other numbers
-plt.title((train_labels[index]))
+index = 42  # change  index to view other numbers
+plt.title(f"labeled as : {train_labels[index]}")
 plt.imshow(train_data[index].reshape(28, 28), cmap="binary")
 plt.show()
 
@@ -124,6 +123,7 @@ def linear_activation_forward(A_prev, W, b, activation):
 
 # Computes forward propagation for the entire neural network
 # X: input data
+# AL: model prediction
 # parameters: dictionary containing parameters (weights and biases) of the model
 def model_forward_propagation(X, parameters):
     caches = []
@@ -291,8 +291,24 @@ def train_neural_net(X, Y, layers_dims, learning_rate, max_iterations, tolerance
 layers_dims = [784, 500, 400, 300, 100, 10]  # n-layer model (n=6 including input and output layer)
 # first hidden layer has 500 nodes, second hiden layer has 400 nodes
 
-parameters = train_neural_net(train_data, train_label, layers_dims, learning_rate=0.0005, max_iterations=3, tolerance=1e-6)
+parameters = train_neural_net(train_data, train_label, layers_dims, learning_rate=0.0005, max_iterations=35, tolerance=1e-6)
 # variable parameter in network learning_rate, max_iterations, tolerance
 
 
-# 11. test & plot prediction accuracy of neural network
+# 11. test model prediction
+def test_prediction(parameters, X, index):
+    # Ensure X is of the right shape (input layer)
+    X_sample = X[:, index].reshape(-1, 1)
+
+    # Perform forward propagation
+    AL, _ = model_forward_propagation(X_sample, parameters)
+
+    # Convert output to predicted label
+    predicted_label = np.argmax(AL, axis=0)[0]
+
+    return predicted_label
+
+
+sample_index = 42  # Change this index to predict other samples
+predicted_label = test_prediction(parameters, train_data, sample_index)
+print(f"Predicted label for sample index {train_labels[sample_index]}: {predicted_label}")
