@@ -290,7 +290,7 @@ def train_neural_net(X, Y, layers_dims, learning_rate, max_iterations, tolerance
 layers_dims = [784, 500, 400, 300, 100, 10]  # n-layer model (n=6 including input and output layer)
 # first hidden layer has 500 nodes, second hiden layer has 400 nodes
 
-parameters = train_neural_net(train_data, train_label, layers_dims, learning_rate=0.0005, max_iterations=35, tolerance=0.3)
+parameters = train_neural_net(train_data, train_label, layers_dims, learning_rate=0.0005, max_iterations=3, tolerance=0.3)
 # variable parameter in network learning_rate, max_iterations, tolerance
 
 
