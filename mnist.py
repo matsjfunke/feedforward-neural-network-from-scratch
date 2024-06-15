@@ -129,7 +129,7 @@ def linear_activation_forward(A_prev, W, b, activation):
 # Computes forward propagation for the entire neural network
 # X: input data
 # parameters: dictionary containing parameters (weights and biases) of the model
-def L_model_forward(X, parameters):
+def model_forward_propagation(X, parameters):
     caches = []
     A = X
     network_layer = len(parameters) // 2
@@ -241,3 +241,38 @@ def model_backward_propagation(AL, truth, caches):
         grads["db" + str(layer + 1)] = db_temp
 
     return grads
+
+
+# 6. upgrade function for weights and bias
+def update_parameters(parameters, grads, learning_rate):
+    len_update = len(parameters) // 2  # contains both weights & biases for each layer
+
+    for layer_idx in range(len_update):
+        parameters["W" + str(layer_idx+1)] = parameters["W" + str(layer_idx+1)] - (learning_rate * grads["dW" + str(layer_idx+1)])
+        parameters["b" + str(layer_idx+1)] = parameters["b" + str(layer_idx+1)] - (learning_rate * grads["db" + str(layer_idx+1)])
+
+    return parameters
+
+
+# Define the architecture of the neural network
+layers_dims = [784, 128, 64, 10]  # Example architecture: input layer with 784 units, two hidden layers with 128 and 64 units, and output layer with 10 units
+
+# Initialize parameters
+parameters = initialize_parameters_deep(layers_dims)
+print(parameters)
+
+# Example forward propagation
+AL, caches = model_forward_propagation(train_data, parameters)
+print(f"\n {AL}, {caches}")
+
+# Compute cost
+cost = compute_cost(AL, train_label)
+
+# Backward propagation
+grads = model_backward_propagation(AL, train_label, caches)
+print("grads= ", grads)
+
+# Update parameters
+learning_rate = 0.01
+parameters = update_parameters(parameters, grads, learning_rate)
+print("updated parameters= ", parameters)
