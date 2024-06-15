@@ -254,25 +254,44 @@ def update_parameters(parameters, grads, learning_rate):
     return parameters
 
 
-# Define the architecture of the neural network
-layers_dims = [784, 128, 64, 10]  # Example architecture: input layer with 784 units, two hidden layers with 128 and 64 units, and output layer with 10 units
+# 9.visualize graph of cost
+def plot_graph(cost_plot):
+    x_value = list(range(1, len(cost_plot) + 1))
+    plt.xlabel('iteration')
+    plt.ylabel('cost')
+    plt.plot(x_value, cost_plot, 0., color='r')
+    plt.show()
 
-# Initialize parameters
-parameters = initialize_parameters_deep(layers_dims)
-print(parameters)
 
-# Example forward propagation
-AL, caches = model_forward_propagation(train_data, parameters)
-print(f"\n {AL}, {caches}")
+# 10. defining structure of neural network -> adjust layers_dims for different shapes
 
-# Compute cost
-cost = compute_cost(AL, train_label)
+# First element is the input layer of 28* 28=784 pixel value. Last element is the output layer of 10 classes(0 to 9).
+# Example First hidden layer has 500 nodes, second hiden layer has 400 nodes
+layers_dims = [784, 500, 400, 300, 100, 10]  # n-layer model (n=6 including input and output layer)
+len_update = len(layers_dims)
 
-# Backward propagation
-grads = model_backward_propagation(AL, train_label, caches)
-print("grads= ", grads)
 
-# Update parameters
-learning_rate = 0.01
-parameters = update_parameters(parameters, grads, learning_rate)
-print("updated parameters= ", parameters)
+# function to call sub_functions
+def run_neural_net(X, Y, layers_dims, learning_rate, num_iterations):
+    print("training...")
+    costs = []
+    cost_plot = np.zeros(num_iterations)
+    parameters = initialize_parameters_deep(layers_dims)
+
+    for i in range(0, num_iterations):
+        AL, caches = model_forward_propagation(X, parameters)
+
+        cost = compute_cost(AL, Y)
+
+        grads = model_backward_propagation(AL, Y, caches)
+
+        parameters = update_parameters(parameters, grads, learning_rate)
+
+        cost_plot[i] = cost
+    plot_graph(cost_plot)
+    return parameters
+
+
+# variable parameter in network learning_rate, iterationd
+parameters = run_neural_net(train_data, train_label, layers_dims, learning_rate=0.0005, num_iterations=35)
+print("training done")
