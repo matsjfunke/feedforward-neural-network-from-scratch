@@ -3,7 +3,7 @@ matsjfunke
 """
 import math
 import numpy as np  # linear algebra
-import pandas as pd  # data processing, CSV file I/O (e.g. pd.read_csv)
+import pandas as pd  # data processing CSV file
 import matplotlib.pyplot as plt
 
 
@@ -150,7 +150,16 @@ def compute_cost(predicted_output, truth):
     return cost
 
 
-# 5. backward propagation
+# 5.visualize graph of cost
+def plot_graph(cost_plot):
+    x_value = list(range(1, len(cost_plot) + 1))
+    plt.xlabel('iteration')
+    plt.ylabel('cost')
+    plt.plot(x_value, cost_plot, 0., color='r')
+    plt.show()
+
+
+# 6. backward propagation
 # derivative of activation function (backward propagation)
 # remember gradients are used to find the minimum
 def sigmoid_gradient(activation_fn_gradient, cache):
@@ -239,7 +248,7 @@ def model_backward_propagation(AL, truth, caches):
     return grads
 
 
-# 6. upgrade function for weights and bias
+# 7. upgrade function for weights and bias
 def update_parameters(parameters, grads, learning_rate):
     len_update = len(parameters) // 2  # contains both weights & biases for each layer
 
@@ -250,17 +259,7 @@ def update_parameters(parameters, grads, learning_rate):
     return parameters
 
 
-# 9.visualize graph of cost
-def plot_graph(cost_plot):
-    x_value = list(range(1, len(cost_plot) + 1))
-    plt.xlabel('iteration')
-    plt.ylabel('cost')
-    plt.plot(x_value, cost_plot, 0., color='r')
-    plt.show()
-
-
-# 10. defining structure of neural network -> adjust layers_dims for different shapes
-
+# 8. defining structure of neural network -> adjust layers_dims for different shapes
 # function to call sub_functions
 def train_neural_net(X, Y, layers_dims, learning_rate, max_iterations, tolerance):
     print("training...")
@@ -291,11 +290,11 @@ def train_neural_net(X, Y, layers_dims, learning_rate, max_iterations, tolerance
 layers_dims = [784, 500, 400, 300, 100, 10]  # n-layer model (n=6 including input and output layer)
 # first hidden layer has 500 nodes, second hiden layer has 400 nodes
 
-parameters = train_neural_net(train_data, train_label, layers_dims, learning_rate=0.0005, max_iterations=35, tolerance=1e-6)
+parameters = train_neural_net(train_data, train_label, layers_dims, learning_rate=0.0005, max_iterations=35, tolerance=0.3)
 # variable parameter in network learning_rate, max_iterations, tolerance
 
 
-# 11. test model prediction
+# 9. test model prediction
 def test_prediction(parameters, X, index):
     # Ensure X is of the right shape (input layer)
     X_sample = X[:, index].reshape(-1, 1)
