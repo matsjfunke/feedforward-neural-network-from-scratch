@@ -86,7 +86,7 @@ def initialize_parameters_deep(layer_dims):
     layer_count = len(layer_dims)
 
     for layer in range(1, layer_count):
-        parameters['W' + str(layer)] = np.random.randn(layer_dims[layer], layer_dims[layer - 1]) / np.sqrt(layer_dims[layer - 1])  # *0.01
+        parameters['W' + str(layer)] = np.random.randn(layer_dims[layer], layer_dims[layer - 1]) / np.sqrt(layer_dims[layer - 1])
         parameters['b' + str(layer)] = np.zeros((layer_dims[layer], 1))
 
     return parameters
@@ -265,20 +265,13 @@ def plot_graph(cost_plot):
 
 # 10. defining structure of neural network -> adjust layers_dims for different shapes
 
-# First element is the input layer of 28* 28=784 pixel value. Last element is the output layer of 10 classes(0 to 9).
-# Example First hidden layer has 500 nodes, second hiden layer has 400 nodes
-layers_dims = [784, 500, 400, 300, 100, 10]  # n-layer model (n=6 including input and output layer)
-len_update = len(layers_dims)
-
-
 # function to call sub_functions
-def run_neural_net(X, Y, layers_dims, learning_rate, num_iterations):
+def run_neural_net(X, Y, layers_dims, learning_rate, max_iterations, tolerance):
     print("training...")
-    costs = []
-    cost_plot = np.zeros(num_iterations)
+    cost_plot = np.zeros(max_iterations)
     parameters = initialize_parameters_deep(layers_dims)
 
-    for i in range(0, num_iterations):
+    for i in range(0, max_iterations):
         AL, caches = model_forward_propagation(X, parameters)
 
         cost = compute_cost(AL, Y)
@@ -288,10 +281,19 @@ def run_neural_net(X, Y, layers_dims, learning_rate, num_iterations):
         parameters = update_parameters(parameters, grads, learning_rate)
 
         cost_plot[i] = cost
+        if i > 0 and abs(cost_plot[i] - cost_plot[i-1]) < tolerance:
+            print(f"Training stopped early at iteration {i} due to convergence within tolerance.")
+            cost_plot = cost_plot[:i+1]  # Truncate cost_plot to the number of iterations run
+            break
+
     plot_graph(cost_plot)
+    print("training done")
     return parameters
 
 
-# variable parameter in network learning_rate, iterationd
-parameters = run_neural_net(train_data, train_label, layers_dims, learning_rate=0.0005, num_iterations=35)
-print("training done")
+# input layer of 28* 28=784 pixel value, output layer of 10 classes / predictions(0 to 9).
+layers_dims = [784, 500, 400, 300, 100, 10]  # n-layer model (n=6 including input and output layer)
+# first hidden layer has 500 nodes, second hiden layer has 400 nodes
+
+parameters = run_neural_net(train_data, train_label, layers_dims, learning_rate=0.0005, max_iterations=30, tolerance=1e-6)
+# variable parameter in network learning_rate, max_iterations, tolerance
