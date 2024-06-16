@@ -3,3 +3,4 @@ __pycache__
 *.xlsx
 .luarc.json
 *.csv
+*.DS_Store
