@@ -108,6 +108,7 @@ def get_accuracy(predictions, Y):
 
 
 # Gradient descent to train the neural network
+# alpha = learning rate
 def gradient_descent(X, Y, alpha, iterations):
     W1, b1, W2, b2 = init_params()
     for i in range(iterations):
