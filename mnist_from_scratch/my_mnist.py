@@ -48,7 +48,7 @@ row_train, col_train = features_train.shape
 
 
 # 3. generate random starting weights & biases
-def inital_parameters(num_input_neurons, num_output_neurons):
+def initial_parameters(num_input_neurons, num_output_neurons):
     weights = np.random.rand(num_output_neurons, num_input_neurons) - 0.5
     biases = np.random.rand(num_output_neurons, 1) - 0.5  # 1 because each layer has it's own bias
     return weights, biases
@@ -114,19 +114,44 @@ def backward_prop(features, labels, weights, layer_output, activation_function):
     return gradient_weights, gradient_biases
 
 
-# Example usage:
-# Assuming we have the following variables defined from the previous code
+# 7. update parameters (uses gradient_descent formula)
+def gradient_descent(weights, biases, gradient_weights, gradient_biases, learning_rate):
+    updated_weights = weights - learning_rate * gradient_weights
+    updated_biases = biases - learning_rate * gradient_biases
+    return updated_weights, updated_biases
+
+
+# Example gradient_descen testing loop
 num_input_neurons = features_train.shape[0]
-num_output_neurons = 10  # For digit classification (0-9)
+num_output_neurons = len(np.unique(labels_train))
+learning_rate = 0.01
+epochs = 100
 
 # Initialize parameters
-weights, biases = inital_parameters(num_input_neurons, num_output_neurons)
+weights, biases = initial_parameters(num_input_neurons, num_output_neurons)
 
-# Perform forward propagation
-layer_output = forward_propagation(features_train, weights, biases, "relu")
+print(dashline)
+for epoch in range(epochs):
+    # Forward propagation
+    layer_output = forward_propagation(features_train, weights, biases, activation_function="softmax")
 
-# Compute gradients via backward propagation
-dW, db = backward_prop(features_train, labels_train, weights, layer_output, "relu")
+    # Compute cost
+    current_cost = cost_function(layer_output, one_hot_encode(labels_train, num_output_neurons))
 
-print("Gradients for weights:", dW)
-print("Gradients for biases:", db)
+    # Backward propagation
+    gradient_weights, gradient_biases = backward_prop(features_train, labels_train, weights, layer_output, activation_function="softmax")
+
+    # Update parameters using gradient descent
+    updated_weights, updated_biases = gradient_descent(weights, biases, gradient_weights, gradient_biases, learning_rate)
+
+    # Print progress
+    if (epoch + 1) % 10 == 0:
+        print(f"Epoch {epoch + 1}/{epochs}, Cost: {current_cost}")
+        print(f"original weights: {weights.shape} updated: {updated_weights.shape}")
+        print(f"original biases: {biases.shape} updated: {updated_biases.shape}")
+
+# After training, you can evaluate on test set or visualize results
+# For example:
+test_predictions = forward_propagation(features_test, weights, biases, activation_function="softmax")
+test_cost = cost_function(test_predictions, one_hot_encode(labels_test, num_output_neurons))
+print(f"Test Cost: {test_cost}")
