@@ -78,6 +78,7 @@ def forward_propagation(features_train, weights, biases, activation_function):
 def cost_function(predictions, labels):
     sample_count = labels.shape[1]  # Number of samples
     cost = -np.sum(labels * np.log(predictions)) / sample_count
+    print("Cost: ", cost)
     return cost
 
 
@@ -88,14 +89,44 @@ def one_hot_encode(labels, num_classes):
     return one_hot
 
 
-num_classes = len(unique_labels)
-labels_train_one_hot = one_hot_encode(labels_train, num_classes)
+def relu_derivative(weighted_sum):
+    return np.where(weighted_sum > 0, 1, 0)
 
+
+def softmax_derivative(softmax_output):
+    s = softmax_output.reshape(-1, 1)
+    return np.diagflat(s) - np.dot(s, s.T)
+
+
+# 6. backward propagation to compute gradients
+def backward_prop(features, labels, weights, layer_output, activation_function):
+    sample_count = features.shape[1]  # Number of samples
+    one_hot_Y = one_hot_encode(labels, weights.shape[0])  # Number of output neurons
+
+    if activation_function == "softmax":
+        output_error = layer_output - one_hot_Y  # Difference between prediction and actual output influences parameter changes
+    elif activation_function == "relu":
+        output_error = (layer_output - one_hot_Y) * relu_derivative(layer_output)  # Adjust parameters based on error magnitude and direction
+
+    gradient_weights = 1 / sample_count * output_error.dot(features.T)
+    gradient_biases = 1 / sample_count * np.sum(output_error, axis=1, keepdims=True)
+
+    return gradient_weights, gradient_biases
+
+
+# Example usage:
+# Assuming we have the following variables defined from the previous code
+num_input_neurons = features_train.shape[0]
+num_output_neurons = 10  # For digit classification (0-9)
+
+# Initialize parameters
+weights, biases = inital_parameters(num_input_neurons, num_output_neurons)
 
 # Perform forward propagation
-weights, biases = inital_parameters(features_train.shape[0], num_classes)
-predictions = forward_propagation(features_train, weights, biases, "softmax")
+layer_output = forward_propagation(features_train, weights, biases, "relu")
 
-# Calculate cost
-cost = cost_function(predictions, labels_train_one_hot)
-print(dashline, "\nCost: ", cost)
+# Compute gradients via backward propagation
+dW, db = backward_prop(features_train, labels_train, weights, layer_output, "relu")
+
+print("Gradients for weights:", dW)
+print("Gradients for biases:", db)
