@@ -74,21 +74,28 @@ def forward_propagation(features_train, weights, biases, activation_function):
         return layer_output
 
 
-# Initialize parameters
-num_input_neurons = features_train.shape[0]
-num_output_neurons = 10  # Assuming 10 classes for classification
+# 5. cost function calculation
+def cost_function(predictions, labels):
+    sample_count = labels.shape[1]  # Number of samples
+    cost = -np.sum(labels * np.log(predictions)) / sample_count
+    return cost
 
-weights, biases = inital_parameters(num_input_neurons, num_output_neurons)
-activation_function = "softmax"  # Example with softmax activation
+
+# one-hot encode labels_train
+def one_hot_encode(labels, num_classes):
+    one_hot = np.zeros((num_classes, labels.size))
+    one_hot[labels, np.arange(labels.size)] = 1
+    return one_hot
+
+
+num_classes = len(unique_labels)
+labels_train_one_hot = one_hot_encode(labels_train, num_classes)
+
 
 # Perform forward propagation
-output = forward_propagation(features_train, weights, biases, activation_function)
+weights, biases = inital_parameters(features_train.shape[0], num_classes)
+predictions = forward_propagation(features_train, weights, biases, "softmax")
 
-# Print and verify output
-print("Output shape:", output.shape)  # (10, 41000): 10 classes across 41,000 training examples.
-print("Output example:", output[:, 0])  # array that represents softmax probabilities (range 0-1) for one example across 10 classes.
-
-
-# 5. calculate cost
-
-# def gradient_descent(features_train, labels_train, learning_rate, max_iterations):
+# Calculate cost
+cost = cost_function(predictions, labels_train_one_hot)
+print(dashline, "\nCost: ", cost)
