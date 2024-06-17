@@ -121,37 +121,43 @@ def gradient_descent(weights, biases, gradient_weights, gradient_biases, learnin
     return updated_weights, updated_biases
 
 
-# Example gradient_descen testing loop
-num_input_neurons = features_train.shape[0]
-num_output_neurons = len(np.unique(labels_train))
-learning_rate = 0.01
-epochs = 100
+# 8. train network, define structure/ shape
+def train_model(features_train, labels_train, features_test, labels_test, max_iterations=100, learning_rate=0.01, tolerance=1e-6):
+    num_input_neurons = features_train.shape[0]
+    num_output_neurons = len(np.unique(labels_train))
 
-# Initialize parameters
-weights, biases = initial_parameters(num_input_neurons, num_output_neurons)
+    # Initialize parameters
+    weights, biases = initial_parameters(num_input_neurons, num_output_neurons)
 
-print(dashline)
-for epoch in range(epochs):
-    # Forward propagation
-    layer_output = forward_propagation(features_train, weights, biases, activation_function="softmax")
+    previous_cost = float('inf')  # Initialize previous cost to infinity
 
-    # Compute cost
-    current_cost = cost_function(layer_output, one_hot_encode(labels_train, num_output_neurons))
+    for iteration in range(max_iterations):
+        # Forward propagation
+        layer_output = forward_propagation(features_train, weights, biases, activation_function="softmax")
 
-    # Backward propagation
-    gradient_weights, gradient_biases = backward_prop(features_train, labels_train, weights, layer_output, activation_function="softmax")
+        # Compute cost
+        current_cost = cost_function(layer_output, one_hot_encode(labels_train, num_output_neurons))
 
-    # Update parameters using gradient descent
-    updated_weights, updated_biases = gradient_descent(weights, biases, gradient_weights, gradient_biases, learning_rate)
+        # Check for convergence based on tolerance
+        if abs(previous_cost - current_cost) < tolerance:
+            print(f"{dashline}\nThe difference between costs was less than the tolerance: {tolerance} at iteration: {iteration + 1} with cost {current_cost}")
+            break
 
-    # Print progress
-    if (epoch + 1) % 10 == 0:
-        print(f"Epoch {epoch + 1}/{epochs}, Cost: {current_cost}")
-        print(f"original weights: {weights.shape} updated: {updated_weights.shape}")
-        print(f"original biases: {biases.shape} updated: {updated_biases.shape}")
+        # Backward propagation
+        gradient_weights, gradient_biases = backward_prop(features_train, labels_train, weights, layer_output, activation_function="softmax")
 
-# After training, you can evaluate on test set or visualize results
-# For example:
-test_predictions = forward_propagation(features_test, weights, biases, activation_function="softmax")
-test_cost = cost_function(test_predictions, one_hot_encode(labels_test, num_output_neurons))
-print(f"Test Cost: {test_cost}")
+        # Update parameters using gradient descent
+        weights, biases = gradient_descent(weights, biases, gradient_weights, gradient_biases, learning_rate)
+
+        # Update previous cost
+        previous_cost = current_cost
+
+        # Print progress
+        if (iteration + 1) % 10 == 0:
+            print(f"Epoch {iteration + 1}/{max_iterations}, Cost: {current_cost}")
+
+    return weights, biases
+
+
+# Example usage:
+weights, biases = train_model(features_train, labels_train, features_test, labels_test, max_iterations=100, learning_rate=0.01, tolerance=1e-6)
