@@ -22,6 +22,7 @@ label_column = data[:, 0]
 unique_labels, counts = np.unique(label_column, return_counts=True)
 for label, count in zip(unique_labels, counts):
     print(f"Label: {label}, Count: {count}")
+print(dashline)
 
 plt.xlabel('Labels / Numbers')
 plt.ylabel('Number of Samples')
@@ -122,42 +123,61 @@ def gradient_descent(weights, biases, gradient_weights, gradient_biases, learnin
 
 
 # 8. train network, define structure/ shape
-def train_model(features_train, labels_train, features_test, labels_test, max_iterations=100, learning_rate=0.01, tolerance=1e-6):
+def train_model(features_train, labels_train, architecture, max_iterations=100, learning_rate=0.01, tolerance=1e-6):
     num_input_neurons = features_train.shape[0]
-    num_output_neurons = len(np.unique(labels_train))
+    previous_layer_output = features_train
 
-    # Initialize parameters
-    weights, biases = initial_parameters(num_input_neurons, num_output_neurons)
+    for i, layer in enumerate(architecture):
+        num_output_neurons = layer["output_dim"]
 
-    previous_cost = float('inf')  # Initialize previous cost to infinity
+        # Initialize parameters for the layer
+        weights, biases = initial_parameters(layer["input_dim"], num_output_neurons)
 
-    for iteration in range(max_iterations):
-        # Forward propagation
-        layer_output = forward_propagation(features_train, weights, biases, activation_function="softmax")
+        previous_cost = float('inf')  # Initialize previous cost to infinity
 
-        # Compute cost
-        current_cost = cost_function(layer_output, one_hot_encode(labels_train, num_output_neurons))
+        for iteration in range(max_iterations):
+            # Forward propagation
+            layer_output = forward_propagation(previous_layer_output, weights, biases, layer["activation"])
 
-        # Check for convergence based on tolerance
-        if abs(previous_cost - current_cost) < tolerance:
-            print(f"{dashline}\nThe difference between costs was less than the tolerance: {tolerance} at iteration: {iteration + 1} with cost {current_cost}")
-            break
+            # Compute cost (only for the final layer)
+            if i == len(architecture) - 1:
+                current_cost = cost_function(layer_output, one_hot_encode(labels_train, num_output_neurons))
 
-        # Backward propagation
-        gradient_weights, gradient_biases = backward_prop(features_train, labels_train, weights, layer_output, activation_function="softmax")
+                # Check for convergence based on tolerance
+                if abs(previous_cost - current_cost) < tolerance:
+                    print(f"The difference between costs was less than the tolerance: {tolerance} at iteration: {iteration + 1} with cost {current_cost}")
+                    break
 
-        # Update parameters using gradient descent
-        weights, biases = gradient_descent(weights, biases, gradient_weights, gradient_biases, learning_rate)
+                previous_cost = current_cost
 
-        # Update previous cost
-        previous_cost = current_cost
+            # Backward propagation
+            gradient_weights, gradient_biases = backward_prop(previous_layer_output, labels_train, weights, layer_output, layer["activation"])
 
-        # Print progress
-        if (iteration + 1) % 10 == 0:
-            print(f"Epoch {iteration + 1}/{max_iterations}, Cost: {current_cost}")
+            # Update parameters using gradient descent
+            weights, biases = gradient_descent(weights, biases, gradient_weights, gradient_biases, learning_rate)
+
+            # Update previous layer output for next iteration
+            previous_layer_output = layer_output
+
+            # Print progress
+            if (iteration + 1) % 10 == 0:
+                print(f"Layer {i+1} - Epoch {iteration + 1}/{max_iterations}, Cost: {current_cost}")
 
     return weights, biases
 
 
-# Example usage:
-weights, biases = train_model(features_train, labels_train, features_test, labels_test, max_iterations=100, learning_rate=0.01, tolerance=1e-6)
+# 9. define architecture & train network
+def run_architecture(features_train, labels_train):
+
+    # Define layers, neurons, and activation functions
+    architecture = [
+        {"input_dim": 784, "output_dim": 256, "activation": "relu"},
+        {"input_dim": 256, "output_dim": 128, "activation": "relu"},
+        {"input_dim": 128, "output_dim": 10, "activation": "softmax"}
+    ]
+
+    weights, biases = train_model(features_train, labels_train, architecture, max_iterations=100, learning_rate=0.01, tolerance=1e-6)
+    print(weights.shape, biases.shape)
+
+
+run_architecture(features_train, labels_train)

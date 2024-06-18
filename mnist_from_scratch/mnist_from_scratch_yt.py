@@ -1,7 +1,7 @@
 """
 matsjfunke
 
-credit https://youtu.be/w8yWXqWQYmU?si=2DmUAwDRi9NTRz7O
+this is a refactored and improved version of this notebook https://youtu.be/w8yWXqWQYmU?si=2DmUAwDRi9NTRz7O
 """
 import zipfile
 import numpy as np
