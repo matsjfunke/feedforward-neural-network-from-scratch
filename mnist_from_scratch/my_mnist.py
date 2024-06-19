@@ -52,8 +52,8 @@ def relu(weighted_sum):
 
 
 def softmax(weighted_sum):
-    exp_sum = np.exp(weighted_sum - np.max(weighted_sum, axis=0))
-    return exp_sum / exp_sum.sum(axis=0)
+    exp_sum = np.exp(weighted_sum - np.max(weighted_sum, axis=0, keepdims=True))
+    return exp_sum / exp_sum.sum(axis=0, keepdims=True)
 
 
 # 4. forward propagation
@@ -84,7 +84,9 @@ def forward_prop(features, parameters, activation_functions):
 
 # 5. cost function calculation
 def cost_function(predictions, labels):
-    sample_count = labels.shape[1]  # Number of samples
+    sample_count = labels.shape[1]
+    epsilon = 1e-10  # Small epsilon to avoid log(0)
+    predictions = np.clip(predictions, epsilon, 1 - epsilon)  # Clip predictions to [epsilon, 1-epsilon]
     cost = -np.sum(labels * np.log(predictions)) / sample_count
     print("Cost: ", cost)
     return cost
@@ -102,11 +104,6 @@ def relu_derivative(weighted_sum):
     return np.where(weighted_sum > 0, 1, 0)
 
 
-def softmax_derivative(softmax_output):
-    s = softmax_output.reshape(-1, 1)
-    return np.diagflat(s) - np.dot(s, s.T)
-
-
 # 6. backward propagation to compute gradients
 def backward_prop(features, labels, parameters, cache, activation_functions):
     gradients = {}
@@ -114,20 +111,28 @@ def backward_prop(features, labels, parameters, cache, activation_functions):
     sample_count = features.shape[1]
     one_hot_labels = one_hot_encode(labels, parameters[f'W{num_layers}'].shape[0])
 
+    # Initialize error for the last layer
     error = cache[f'A{num_layers}'] - one_hot_labels
 
+    # Backpropagate through each layer
     for layer in reversed(range(1, num_layers + 1)):
         delta = error
 
         if activation_functions[layer - 1] == "softmax":
-            gradient_weights = 1 / sample_count * delta.dot(cache[f'A{layer-1}'].T)
-            gradient_biases = 1 / sample_count * np.sum(delta, axis=1, keepdims=True)
+            # Calculate gradients for softmax activation
+            # softmax_derivative not used because softmax used in output layer where we calculate the cross-entropy loss directly
+            gradient_weights = 1.0 / sample_count * delta.dot(cache[f'A{layer-1}'].T)
+            gradient_biases = 1.0 / sample_count * np.sum(delta, axis=1, keepdims=True)
+            # Calculate error for previous layer
             error = parameters[f'W{layer}'].T.dot(delta)
         elif activation_functions[layer - 1] == "relu":
-            gradient_weights = 1 / sample_count * delta.dot(cache[f'A{layer-1}'].T)
-            gradient_biases = 1 / sample_count * np.sum(delta, axis=1, keepdims=True)
+            # Calculate gradients for ReLU activation
+            gradient_weights = 1.0 / sample_count * delta.dot(cache[f'A{layer-1}'].T)
+            gradient_biases = 1.0 / sample_count * np.sum(delta, axis=1, keepdims=True)
+            # Calculate error for previous layer using ReLU derivative
             error = parameters[f'W{layer}'].T.dot(delta) * relu_derivative(cache[f'Z{layer-1}'])
 
+        # Store gradients for weights and biases
         gradients[f'dW{layer}'] = gradient_weights
         gradients[f'db{layer}'] = gradient_biases
 
@@ -177,9 +182,9 @@ def train_model(features_train, labels_train, layers, max_iterations, learning_r
 # 9. define architecture & start training network
 def run_architecture(features_train, labels_train):
     layers = [128, 64, 10]
-    max_iterations = 30
-    learning_rate = 0.2
-    tolerance = 1e-6
+    max_iterations = 100
+    learning_rate = 0.02
+    tolerance = 0.002
 
     parameters = train_model(features_train, labels_train, layers, max_iterations, learning_rate, tolerance)
     for i in range(1, len(layers)):
