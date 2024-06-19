@@ -31,7 +31,6 @@ data_train = data[1000:row].T
 labels_train = data_train[0]
 features_train = data_train[1:col]
 features_train = features_train / 255.
-row_train, col_train = features_train.shape
 
 
 # 3. generate random starting weights & biases
