@@ -28,4 +28,4 @@ looping through 4 -> 5 -> 6 -> 7 = **learning**
     - use the through training calculated Parameters to predict outside the training example
 
 output of train_test_model.py
-(train_test_model.png)
+![output](./train_test_model.png)
