@@ -63,6 +63,9 @@ def forward_prop(features, parameters, activation_functions):
     cache['A0'] = activations  # Input features are treated as A0
     num_layers = len(parameters) // 2
 
+    # Initialize cache['Z0'] for the weighted input to the first layer
+    cache['Z0'] = features
+
     for layer in range(1, num_layers + 1):
         weights = parameters[f'W{layer}']
         biases = parameters[f'b{layer}']
@@ -94,6 +97,7 @@ def one_hot_encode(labels, num_classes):
     return one_hot
 
 
+# derivatices of activation functions
 def relu_derivative(weighted_sum):
     return np.where(weighted_sum > 0, 1, 0)
 
@@ -114,10 +118,14 @@ def backward_prop(features, labels, parameters, cache, activation_functions):
 
     for layer in reversed(range(1, num_layers + 1)):
         delta = error
-        gradient_weights = 1 / sample_count * delta.dot(cache[f'A{layer-1}'].T)
-        gradient_biases = 1 / sample_count * np.sum(delta, axis=1, keepdims=True)
 
-        if layer > 1:
+        if activation_functions[layer - 1] == "softmax":
+            gradient_weights = 1 / sample_count * delta.dot(cache[f'A{layer-1}'].T)
+            gradient_biases = 1 / sample_count * np.sum(delta, axis=1, keepdims=True)
+            error = parameters[f'W{layer}'].T.dot(delta)
+        elif activation_functions[layer - 1] == "relu":
+            gradient_weights = 1 / sample_count * delta.dot(cache[f'A{layer-1}'].T)
+            gradient_biases = 1 / sample_count * np.sum(delta, axis=1, keepdims=True)
             error = parameters[f'W{layer}'].T.dot(delta) * relu_derivative(cache[f'Z{layer-1}'])
 
         gradients[f'dW{layer}'] = gradient_weights
@@ -188,7 +196,7 @@ def predict(features, parameters, activation_functions):
 
 # 11. Evaluate on test set
 activation_functions = ["relu", "relu", "softmax"]
-parameters = run_architecture(features_train, labels_train)  # Run the architecture and get the trained parameters
+parameters = run_architecture(features_train, labels_train)
 predictions_test = predict(features_test, parameters, activation_functions)
 accuracy = accuracy_score(labels_test, predictions_test)
 
