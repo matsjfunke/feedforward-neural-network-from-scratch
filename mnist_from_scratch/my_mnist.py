@@ -4,7 +4,8 @@ matsjfunke
 import zipfile
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot as plt
+from sklearn.metrics import accuracy_score
+
 dashline = "-" * 100
 
 # 1. dataset loading
@@ -15,21 +16,6 @@ with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
 data = pd.read_csv("./input/train.csv")
 data = np.array(data)
 row, col = data.shape
-
-# visualize data
-print(dashline, "\ndistribution of labels / numbers")
-label_column = data[:, 0]
-unique_labels, counts = np.unique(label_column, return_counts=True)
-for label, count in zip(unique_labels, counts):
-    print(f"Label: {label}, Count: {count}")
-print(dashline)
-
-plt.xlabel('Labels / Numbers')
-plt.ylabel('Number of Samples')
-plt.title('Distribution of Labels')
-plt.xticks(unique_labels)
-plt.bar(unique_labels, counts, 0.7, color='r')
-plt.show()
 
 # 2. dataset preparation
 np.random.shuffle(data)  # Shuffle the dataset
@@ -49,10 +35,15 @@ row_train, col_train = features_train.shape
 
 
 # 3. generate random starting weights & biases
-def initial_parameters(num_input_neurons, num_output_neurons):
-    weights = np.random.rand(num_output_neurons, num_input_neurons) - 0.5
-    biases = np.random.rand(num_output_neurons, 1) - 0.5  # 1 because each layer has it's own bias
-    return weights, biases
+def initial_parameters(layers):
+    parameters = {}
+    num_layers = len(layers)
+
+    for layer in range(1, num_layers):
+        parameters[f'W{layer}'] = np.random.rand(layers[layer], layers[layer-1]) - 0.5
+        parameters[f'b{layer}'] = np.random.rand(layers[layer], 1) - 0.5
+
+    return parameters
 
 
 # activation functions -> input: weighted_sum of inputs * weights + bias
@@ -61,18 +52,31 @@ def relu(weighted_sum):
 
 
 def softmax(weighted_sum):
-    return np.exp(weighted_sum) / sum(np.exp(weighted_sum))
+    exp_sum = np.exp(weighted_sum - np.max(weighted_sum, axis=0))
+    return exp_sum / exp_sum.sum(axis=0)
 
 
 # 4. forward propagation
-def forward_propagation(features_train, weights, biases, activation_function):
-    weighted_sum = weights.dot(features_train) + biases
-    if activation_function == "relu":
-        layer_output = relu(weighted_sum)
-        return layer_output
-    elif activation_function == "softmax":
-        layer_output = softmax(weighted_sum)
-        return layer_output
+def forward_prop(features, parameters, activation_functions):
+    cache = {}
+    activations = features
+    cache['A0'] = activations  # Input features are treated as A0
+    num_layers = len(parameters) // 2
+
+    for layer in range(1, num_layers + 1):
+        weights = parameters[f'W{layer}']
+        biases = parameters[f'b{layer}']
+        weighted_sum = weights.dot(activations) + biases
+        cache[f'Z{layer}'] = weighted_sum
+
+        if activation_functions[layer-1] == "relu":
+            activations = relu(weighted_sum)
+        elif activation_functions[layer-1] == "softmax":
+            activations = softmax(weighted_sum)
+
+        cache[f'A{layer}'] = activations
+
+    return activations, cache
 
 
 # 5. cost function calculation
@@ -100,81 +104,92 @@ def softmax_derivative(softmax_output):
 
 
 # 6. backward propagation to compute gradients
-def backward_prop(features, labels, weights, layer_output, activation_function):
-    sample_count = features.shape[1]  # Number of samples
-    one_hot_Y = one_hot_encode(labels, weights.shape[0])  # Number of output neurons
+def backward_prop(features, labels, parameters, cache, activation_functions):
+    gradients = {}
+    num_layers = len(parameters) // 2
+    sample_count = features.shape[1]
+    one_hot_labels = one_hot_encode(labels, parameters[f'W{num_layers}'].shape[0])
 
-    if activation_function == "softmax":
-        output_error = layer_output - one_hot_Y  # Difference between prediction and actual output influences parameter changes
-    elif activation_function == "relu":
-        output_error = (layer_output - one_hot_Y) * relu_derivative(layer_output)  # Adjust parameters based on error magnitude and direction
+    error = cache[f'A{num_layers}'] - one_hot_labels
 
-    gradient_weights = 1 / sample_count * output_error.dot(features.T)
-    gradient_biases = 1 / sample_count * np.sum(output_error, axis=1, keepdims=True)
+    for layer in reversed(range(1, num_layers + 1)):
+        delta = error
+        gradient_weights = 1 / sample_count * delta.dot(cache[f'A{layer-1}'].T)
+        gradient_biases = 1 / sample_count * np.sum(delta, axis=1, keepdims=True)
 
-    return gradient_weights, gradient_biases
+        if layer > 1:
+            error = parameters[f'W{layer}'].T.dot(delta) * relu_derivative(cache[f'Z{layer-1}'])
+
+        gradients[f'dW{layer}'] = gradient_weights
+        gradients[f'db{layer}'] = gradient_biases
+
+    return gradients
 
 
 # 7. update parameters (uses gradient_descent formula)
-def gradient_descent(weights, biases, gradient_weights, gradient_biases, learning_rate):
-    updated_weights = weights - learning_rate * gradient_weights
-    updated_biases = biases - learning_rate * gradient_biases
-    return updated_weights, updated_biases
+def gradient_descent(parameters, gradients, learning_rate):
+    num_layers = len(parameters) // 2
+
+    for layer in range(1, num_layers + 1):
+        parameters[f'W{layer}'] -= learning_rate * gradients[f'dW{layer}']
+        parameters[f'b{layer}'] -= learning_rate * gradients[f'db{layer}']
+
+    return parameters
 
 
 # 8. train network
-def train_layer(features_train, labels_train, max_iterations, learning_rate, tolerance):
+def train_model(features_train, labels_train, layers, max_iterations, learning_rate, tolerance):
     num_input_neurons = features_train.shape[0]
-    num_output_neurons = len(np.unique(labels_train))
+    layers = [num_input_neurons] + layers
+    activation_functions = ["relu"] * (len(layers) - 2) + ["softmax"]
 
-    # Initialize parameters
-    weights, biases = initial_parameters(num_input_neurons, num_output_neurons)
+    parameters = initial_parameters(layers)
 
-    previous_cost = float('inf')  # Initialize previous cost to infinity
+    previous_cost = float('inf')
 
     for iteration in range(max_iterations):
-        # Forward propagation
-        layer_output = forward_propagation(features_train, weights, biases, activation_function="softmax")
+        layer_output, cache = forward_prop(features_train, parameters, activation_functions)
+        current_cost = cost_function(layer_output, one_hot_encode(labels_train, layers[-1]))
 
-        # Compute cost
-        current_cost = cost_function(layer_output, one_hot_encode(labels_train, num_output_neurons))
-
-        # Check for convergence based on tolerance
         if abs(previous_cost - current_cost) < tolerance:
-            print(f"{dashline}\nThe difference between costs was less than the tolerance: {tolerance} at iteration: {iteration + 1} with cost {current_cost}")
+            print(f"The difference between costs was less than the tolerance: {tolerance} at iteration: {iteration + 1} with cost {current_cost}")
             break
 
-        # Backward propagation
-        gradient_weights, gradient_biases = backward_prop(features_train, labels_train, weights, layer_output, activation_function="softmax")
+        gradients = backward_prop(features_train, labels_train, parameters, cache, activation_functions)
+        parameters = gradient_descent(parameters, gradients, learning_rate)
 
-        # Update parameters using gradient descent
-        weights, biases = gradient_descent(weights, biases, gradient_weights, gradient_biases, learning_rate)
-
-        # Update previous cost
         previous_cost = current_cost
 
-        # Print progress
         if (iteration + 1) % 10 == 0:
             print(f"Epoch {iteration + 1}/{max_iterations}, Cost: {current_cost}")
 
-    return weights, biases
+    return parameters
 
 
-# 9. define architecture & train network
+# 9. define architecture & start training network
 def run_architecture(features_train, labels_train):
-    max_iterations = 20
+    layers = [128, 64, 10]
+    max_iterations = 30
     learning_rate = 0.2
     tolerance = 1e-6
 
-    # Define layers, neurons, and activation functions
-    architecture = [
-        {"input_dim": 784, "output_dim": 256, "activation": "relu"},
-        {"input_dim": 256, "output_dim": 128, "activation": "relu"},
-        {"input_dim": 128, "output_dim": 10, "activation": "softmax"}
-    ]
+    parameters = train_model(features_train, labels_train, layers, max_iterations, learning_rate, tolerance)
+    for i in range(1, len(layers)):
+        print(f"Layer {i} - Weights shape: {parameters[f'W{i}'].shape}, Biases shape: {parameters[f'b{i}'].shape}")
 
-    weights, biases = train_layer(features_train, labels_train, max_iterations, learning_rate, tolerance)
-    print(weights.shape, biases.shape)
+    return parameters
 
 
-run_architecture(features_train, labels_train)
+# 10. predict function
+def predict(features, parameters, activation_functions):
+    predictions, _ = forward_prop(features, parameters, activation_functions)
+    return np.argmax(predictions, axis=0)
+
+
+# 11. Evaluate on test set
+activation_functions = ["relu", "relu", "softmax"]
+parameters = run_architecture(features_train, labels_train)  # Run the architecture and get the trained parameters
+predictions_test = predict(features_test, parameters, activation_functions)
+accuracy = accuracy_score(labels_test, predictions_test)
+
+print(f"Accuracy on test set: {accuracy * 100:.2f}%")
