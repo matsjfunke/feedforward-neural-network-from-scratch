@@ -1,4 +1,4 @@
-# Feedforward Neural Network on MNIST dataset from scratch
+# Deep Feedforward Neural Network on MNIST dataset from scratch
 
 ## check out my notes on:
 **forward propagation** (computing the output of a neural network):
@@ -79,7 +79,7 @@ python visualize_mnist.py
 python train_test_model.py
 ```
 
-output of train_test_model.py
+# output of train_test_model.py
 ![output](./train_test_model_output.png)
 
 
