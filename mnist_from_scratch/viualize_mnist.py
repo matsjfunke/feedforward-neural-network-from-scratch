@@ -16,6 +16,14 @@ data = pd.read_csv("./input/train.csv")
 data = np.array(data)
 row, col = data.shape
 
+# visualize input number / pixels
+labels = data[0]
+features = data[1:col]
+index = 42  # change  index to view other numbers
+plt.title(f"labeled as : {labels[index]}")
+plt.imshow(features[index].reshape(28, 28), cmap="binary")
+plt.show()
+
 # visualize data
 print(dashline, "\ndistribution of labels / numbers")
 label_column = data[:, 0]

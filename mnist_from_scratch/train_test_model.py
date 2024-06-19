@@ -183,7 +183,7 @@ def train_model(features_train, labels_train, layers, max_iterations, learning_r
 def run_architecture(features_train, labels_train):
     layers = [128, 64, 10]
     max_iterations = 100
-    learning_rate = 0.02
+    learning_rate = 0.03
     tolerance = 0.002
 
     parameters = train_model(features_train, labels_train, layers, max_iterations, learning_rate, tolerance)
@@ -199,10 +199,28 @@ def predict(features, parameters, activation_functions):
     return np.argmax(predictions, axis=0)
 
 
-# 11. Evaluate on test set
+# 11. use parameters to predict a specific sample
+def predict_single_example(sample_index, parameters, activation_functions):
+    sample = features_test[:, sample_index, None]
+    # Reshape features to be a column vector if needed
+    features = sample.reshape((-1, 1))  # Ensure it's a column vector
+
+    predictions, _ = forward_prop(features, parameters, activation_functions)
+    return np.argmax(predictions)
+
+
+# Evaluate on test set
 activation_functions = ["relu", "relu", "softmax"]
 parameters = run_architecture(features_train, labels_train)
 predictions_test = predict(features_test, parameters, activation_functions)
 accuracy = accuracy_score(labels_test, predictions_test)
+print(f"{dashline}\nAccuracy on test set: {accuracy * 100:.2f}%\n{dashline}")
 
-print(f"Accuracy on test set: {accuracy * 100:.2f}%")
+
+predicted_label = predict_single_example(0, parameters, activation_functions)
+print("Testing trained parameters on first sample of test dataset")
+print(f"Predicted label: {predicted_label}, actual label: {labels_test[0]}\n{dashline}")
+
+predicted_label = predict_single_example(1, parameters, activation_functions)
+print("Testing trained parameters on second sample of test dataset")
+print(f"Predicted label: {predicted_label}, actual label: {labels_test[1]}")
