@@ -4,6 +4,7 @@ matsjfunke
 import zipfile
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
 from sklearn.metrics import accuracy_score
 
 dashline = "-" * 100
@@ -182,7 +183,7 @@ def train_model(features_train, labels_train, layers, max_iterations, learning_r
 def run_architecture(features_train, labels_train):
     layers = [128, 64, 10]
     max_iterations = 100
-    learning_rate = 0.03
+    learning_rate = 0.04
     tolerance = 0.002
 
     parameters = train_model(features_train, labels_train, layers, max_iterations, learning_rate, tolerance)
@@ -208,18 +209,33 @@ def predict_single_example(sample_index, parameters, activation_functions):
     return np.argmax(predictions)
 
 
-# Evaluate on test set
-activation_functions = ["relu", "relu", "softmax"]
-parameters = run_architecture(features_train, labels_train)
-predictions_test = predict(features_test, parameters, activation_functions)
-accuracy = accuracy_score(labels_test, predictions_test)
-print(f"{dashline}\nAccuracy on test set: {accuracy * 100:.2f}%\n{dashline}")
+# visualize input number / pixels & compare to model prediction
+def plot_sample_prediction(index, predicted_label):
+    current_image = features_test[:, index, None]
+    label = labels_test[index]
+    current_image = current_image.reshape((28, 28)) * 255
+
+    plt.gray()
+    plt.title(f"Labeled as: {label}, predicted as: {predicted_label}")
+    plt.imshow(current_image, interpolation='nearest')
+    plt.show()
 
 
-predicted_label = predict_single_example(0, parameters, activation_functions)
-print("Testing trained parameters on first sample of test dataset")
-print(f"Predicted label: {predicted_label}, actual label: {labels_test[0]}\n{dashline}")
+if __name__ == "__main__":
+    # Evaluate on test set
+    parameters = run_architecture(features_train, labels_train)
 
-predicted_label = predict_single_example(1, parameters, activation_functions)
-print("Testing trained parameters on second sample of test dataset")
-print(f"Predicted label: {predicted_label}, actual label: {labels_test[1]}")
+    activation_functions = ["relu", "relu", "softmax"]
+    predictions_test = predict(features_test, parameters, activation_functions)
+    accuracy = accuracy_score(labels_test, predictions_test)
+    print(f"{dashline}\nAccuracy on test set: {accuracy * 100:.2f}%\n{dashline}")
+
+    predicted_label = predict_single_example(0, parameters, activation_functions)
+    print("Testing trained parameters on first sample of test dataset")
+    print(f"Labeled as: {labels_test[0]}, predicted as: {predicted_label}\n{dashline}")
+    plot_sample_prediction(0, predicted_label)
+
+    predicted_label = predict_single_example(1, parameters, activation_functions)
+    print("Testing trained parameters on second sample of test dataset")
+    print(f"Labeled as: {labels_test[1]}, predicted as: {predicted_label}\n{dashline}")
+    plot_sample_prediction(1, predicted_label)
