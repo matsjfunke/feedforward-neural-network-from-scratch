@@ -1,7 +1,10 @@
 """
 matsjfunke
 """
+
+import argparse
 import zipfile
+
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -10,9 +13,9 @@ from sklearn.metrics import accuracy_score
 dashline = "-" * 100
 
 # 1. dataset loading
-zip_file_path = './input/train.csv.zip'
-with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
-    zip_ref.extract('train.csv', path="./input")
+zip_file_path = "./input/train.csv.zip"
+with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
+    zip_ref.extract("train.csv", path="./input")
 
 data = pd.read_csv("./input/train.csv")
 data = np.array(data)
@@ -26,12 +29,12 @@ data_test = data[0:1000].T
 labels_test = data_test[0]
 features_test = data_test[1:col]
 # normalizing features_test ensures numbers are between 0-1
-features_test = features_test / 255.  # pixel value can range from 0 to 255
+features_test = features_test / 255.0  # pixel value can range from 0 to 255
 
 data_train = data[1000:row].T
 labels_train = data_train[0]
 features_train = data_train[1:col]
-features_train = features_train / 255.
+features_train = features_train / 255.0
 
 
 # 3. generate random starting weights & biases
@@ -40,8 +43,8 @@ def initial_parameters(layers):
     num_layers = len(layers)
 
     for layer in range(1, num_layers):
-        parameters[f'W{layer}'] = np.random.rand(layers[layer], layers[layer-1]) - 0.5
-        parameters[f'b{layer}'] = np.random.rand(layers[layer], 1) - 0.5
+        parameters[f"W{layer}"] = np.random.rand(layers[layer], layers[layer - 1]) - 0.5
+        parameters[f"b{layer}"] = np.random.rand(layers[layer], 1) - 0.5
 
     return parameters
 
@@ -60,24 +63,24 @@ def softmax(weighted_sum):
 def forward_prop(features, parameters, activation_functions):
     cache = {}
     activations = features
-    cache['A0'] = activations  # Input features are treated as A0
+    cache["A0"] = activations  # Input features are treated as A0
     num_layers = len(parameters) // 2
 
     # Initialize cache['Z0'] for the weighted input to the first layer
-    cache['Z0'] = features
+    cache["Z0"] = features
 
     for layer in range(1, num_layers + 1):
-        weights = parameters[f'W{layer}']
-        biases = parameters[f'b{layer}']
+        weights = parameters[f"W{layer}"]
+        biases = parameters[f"b{layer}"]
         weighted_sum = weights.dot(activations) + biases
-        cache[f'Z{layer}'] = weighted_sum
+        cache[f"Z{layer}"] = weighted_sum
 
-        if activation_functions[layer-1] == "relu":
+        if activation_functions[layer - 1] == "relu":
             activations = relu(weighted_sum)
-        elif activation_functions[layer-1] == "softmax":
+        elif activation_functions[layer - 1] == "softmax":
             activations = softmax(weighted_sum)
 
-        cache[f'A{layer}'] = activations
+        cache[f"A{layer}"] = activations
 
     return activations, cache
 
@@ -109,10 +112,10 @@ def backward_prop(features, labels, parameters, cache, activation_functions):
     gradients = {}
     num_layers = len(parameters) // 2
     sample_count = features.shape[1]
-    one_hot_labels = one_hot_encode(labels, parameters[f'W{num_layers}'].shape[0])
+    one_hot_labels = one_hot_encode(labels, parameters[f"W{num_layers}"].shape[0])
 
     # Initialize error for the last layer
-    error = cache[f'A{num_layers}'] - one_hot_labels
+    error = cache[f"A{num_layers}"] - one_hot_labels
 
     # Backpropagate through each layer
     for layer in reversed(range(1, num_layers + 1)):
@@ -121,20 +124,20 @@ def backward_prop(features, labels, parameters, cache, activation_functions):
         if activation_functions[layer - 1] == "softmax":
             # Calculate gradients for softmax activation
             # softmax_derivative not used because softmax used in output layer where we calculate the cross-entropy loss directly
-            gradient_weights = 1.0 / sample_count * delta.dot(cache[f'A{layer-1}'].T)
+            gradient_weights = 1.0 / sample_count * delta.dot(cache[f"A{layer-1}"].T)
             gradient_biases = 1.0 / sample_count * np.sum(delta, axis=1, keepdims=True)
             # Calculate error for previous layer
-            error = parameters[f'W{layer}'].T.dot(delta)
+            error = parameters[f"W{layer}"].T.dot(delta)
         elif activation_functions[layer - 1] == "relu":
             # Calculate gradients for ReLU activation
-            gradient_weights = 1.0 / sample_count * delta.dot(cache[f'A{layer-1}'].T)
+            gradient_weights = 1.0 / sample_count * delta.dot(cache[f"A{layer-1}"].T)
             gradient_biases = 1.0 / sample_count * np.sum(delta, axis=1, keepdims=True)
             # Calculate error for previous layer using ReLU derivative
-            error = parameters[f'W{layer}'].T.dot(delta) * relu_derivative(cache[f'Z{layer-1}'])
+            error = parameters[f"W{layer}"].T.dot(delta) * relu_derivative(cache[f"Z{layer-1}"])
 
         # Store gradients for weights and biases
-        gradients[f'dW{layer}'] = gradient_weights
-        gradients[f'db{layer}'] = gradient_biases
+        gradients[f"dW{layer}"] = gradient_weights
+        gradients[f"db{layer}"] = gradient_biases
 
     return gradients
 
@@ -144,8 +147,8 @@ def gradient_descent(parameters, gradients, learning_rate):
     num_layers = len(parameters) // 2
 
     for layer in range(1, num_layers + 1):
-        parameters[f'W{layer}'] -= learning_rate * gradients[f'dW{layer}']
-        parameters[f'b{layer}'] -= learning_rate * gradients[f'db{layer}']
+        parameters[f"W{layer}"] -= learning_rate * gradients[f"dW{layer}"]
+        parameters[f"b{layer}"] -= learning_rate * gradients[f"db{layer}"]
 
     return parameters
 
@@ -158,7 +161,7 @@ def train_model(features_train, labels_train, layers, max_iterations, learning_r
 
     parameters = initial_parameters(layers)
 
-    previous_cost = float('inf')
+    previous_cost = float("inf")
 
     for iteration in range(max_iterations):
         layer_output, cache = forward_prop(features_train, parameters, activation_functions)
@@ -180,12 +183,7 @@ def train_model(features_train, labels_train, layers, max_iterations, learning_r
 
 
 # 9. define architecture & start training network
-def run_architecture(features_train, labels_train):
-    layers = [128, 64, 10]
-    max_iterations = 100
-    learning_rate = 0.04
-    tolerance = 0.002
-
+def run_architecture(features_train, labels_train, layers, activation_functions, max_iterations=100, learning_rate=0.04, tolerance=0.002):
     parameters = train_model(features_train, labels_train, layers, max_iterations, learning_rate, tolerance)
     for i in range(1, len(layers)):
         print(f"Layer {i} - Weights shape: {parameters[f'W{i}'].shape}, Biases shape: {parameters[f'b{i}'].shape}")
@@ -200,9 +198,8 @@ def predict(features, parameters, activation_functions):
 
 
 # 11. use parameters to predict a specific sample
-def predict_single_example(sample_index, parameters, activation_functions):
+def predict_single_example(sample_index, features_test, parameters, activation_functions):
     sample = features_test[:, sample_index, None]
-    # Reshape features to be a column vector if needed
     features = sample.reshape((-1, 1))  # Ensure it's a column vector
 
     predictions, _ = forward_prop(features, parameters, activation_functions)
@@ -210,7 +207,7 @@ def predict_single_example(sample_index, parameters, activation_functions):
 
 
 # visualize input number / pixels & compare to model prediction
-def plot_sample_prediction(index, predicted_label):
+def plot_sample_prediction(index, features_test, labels_test, predicted_label):
     current_image = features_test[:, index, None]
     label = labels_test[index]
     current_image = current_image.reshape((28, 28)) * 255
@@ -222,20 +219,28 @@ def plot_sample_prediction(index, predicted_label):
 
 
 if __name__ == "__main__":
-    # Evaluate on test set
-    parameters = run_architecture(features_train, labels_train)
+    parser = argparse.ArgumentParser(description="Run neural network architecture.")
+    parser.add_argument("--layers", type=int, nargs="+", default=[128, 64, 10], help="Number of neurons in each layer")
+    parser.add_argument("--activations", type=str, nargs="+", default=["relu", "relu", "softmax"], help="Activation functions for each layer")
 
-    activation_functions = ["relu", "relu", "softmax"]
+    args = parser.parse_args()
+    layers = args.layers
+    activation_functions = args.activations
+
+    # Assuming features_train, labels_train, features_test, labels_test are already loaded
+    parameters = run_architecture(features_train, labels_train, layers, activation_functions)
+
     predictions_test = predict(features_test, parameters, activation_functions)
     accuracy = accuracy_score(labels_test, predictions_test)
+    dashline = "-" * 40
     print(f"{dashline}\nAccuracy on test set: {accuracy * 100:.2f}%\n{dashline}")
 
-    predicted_label = predict_single_example(0, parameters, activation_functions)
+    predicted_label = predict_single_example(0, features_test, parameters, activation_functions)
     print("Testing trained parameters on first sample of test dataset")
     print(f"Labeled as: {labels_test[0]}, predicted as: {predicted_label}\n{dashline}")
-    plot_sample_prediction(0, predicted_label)
+    plot_sample_prediction(0, features_test, labels_test, predicted_label)
 
-    predicted_label = predict_single_example(1, parameters, activation_functions)
+    predicted_label = predict_single_example(1, features_test, parameters, activation_functions)
     print("Testing trained parameters on second sample of test dataset")
     print(f"Labeled as: {labels_test[1]}, predicted as: {predicted_label}\n{dashline}")
-    plot_sample_prediction(1, predicted_label)
+    plot_sample_prediction(1, features_test, labels_test, predicted_label)
