@@ -11,6 +11,7 @@
 
 # implementing  Neural Network:
 This project implements a simple neural network to classify handwritten numbers from the mnist dataset. 
+You can define the number of layers, neurons per layer, activation functions, and other training parameters via command-line arguments.
 
 The following libraries are used:
 - zipfile: For extracting dataset files.
@@ -56,32 +57,35 @@ The following libraries are used:
 - Define a function to predict the label for a single input sample.
 - Implement a function to visualize an input image and compare the true label with the predicted label.
 
-## Customization
-- Modify the layers list in the run_architecture function to change the architecture of the network.
-- Adjust max_iterations, learning_rate, and tolerance in the train_model function to fine-tune the training process.
-```python
-def run_architecture(features_train, labels_train):
-    layers = [128, 64, 10]  # number of hidden layers and neurons of each layer (input layer always 784 on output always 10)
-    max_iterations = 100  # how many loops
-    learning_rate = 0.04  # how long step into gradient direction (learning_rate -> dot-product with gradient)
-    tolerance = 0.002  # at what difference in cost the learning stops
-```
-
 ## Usage
-```python
+
+```sh
 # install dependencies
-python3 -m venv env
-source env/bin/activate
 pip install -r requirements.txt
-# visualize dataset
+# get to know the dataset
 python visualize_mnist.py
-# train and test model
-python train_test_model.py
+# train network with default parameters
+python neural_network.py
+# train neural_network with specific parameters (don't specify to use the default option)
+python neural_network.py --layers <layer_sizes> --activations <activation_functions> --learning_rate <learning_rate> --max_iterations <iterations> --tolerance <tolerance> --train_file <train_file> --test_file <test_file>
 ```
 
-# output of train_test_model.py
+### Arguments
+
+- `--layers`: Neurons per layer (default: `128 64 10`).
+- `--activations`: Activation functions per layer (default: `relu relu softmax`).
+- `--learning_rate`: Learning rate for training (default: `0.01`).
+- `--max_iterations`: Max training iterations (default: `200`).
+- `--tolerance`: Cost change tolerance for stopping (default: `0.001`).
+- `--train_file`: Path to the ZIP file with the training CSV (default: `./input/train.csv.zip`).
+- `--test_file`: Path to the ZIP file with the test CSV (default `./input/test.csv.zip`).
+
+### Example
+
+```bash
+python neural_network.py --layers 128 64 10 --activations relu relu softmax --learning_rate 0.01 --max_iterations 200 --tolerance 0.001 --train_file ./data/train.csv.zip --test_file ./data/test.csv.zip
+```
+the output should look like:
 ![output](./train_test_model_output.png)
 
-
-# other types / shapes of Neural Networks and their Applications 
-(https://towardsai.net/p/machine-learning/main-types-of-neural-networks-and-its-applications-tutorial-734480d7ec8e)
+have fun tinkering :)
