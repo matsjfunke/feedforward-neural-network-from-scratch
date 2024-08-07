@@ -154,10 +154,9 @@ def gradient_descent(parameters, gradients, learning_rate):
 
 
 # 8. train network
-def train_model(features_train, labels_train, layers, max_iterations, learning_rate, tolerance):
+def train_model(features_train, labels_train, layers, activation_functions, max_iterations, learning_rate, tolerance):
     num_input_neurons = features_train.shape[0]
     layers = [num_input_neurons] + layers
-    activation_functions = ["relu"] * (len(layers) - 2) + ["softmax"]
 
     parameters = initial_parameters(layers)
 
@@ -184,7 +183,7 @@ def train_model(features_train, labels_train, layers, max_iterations, learning_r
 
 # 9. define architecture & start training network
 def run_architecture(features_train, labels_train, layers, activation_functions, max_iterations=100, learning_rate=0.04, tolerance=0.002):
-    parameters = train_model(features_train, labels_train, layers, max_iterations, learning_rate, tolerance)
+    parameters = train_model(features_train, labels_train, layers, activation_functions, max_iterations, learning_rate, tolerance)
     for i in range(1, len(layers)):
         print(f"Layer {i} - Weights shape: {parameters[f'W{i}'].shape}, Biases shape: {parameters[f'b{i}'].shape}")
 
@@ -214,20 +213,32 @@ def plot_sample_prediction(index, features_test, labels_test, predicted_label):
 
     plt.gray()
     plt.title(f"Labeled as: {label}, predicted as: {predicted_label}")
-    plt.imshow(current_image, interpolation='nearest')
+    plt.imshow(current_image, interpolation="nearest")
     plt.show()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run neural network architecture.")
-    parser.add_argument("--layers", type=int, nargs="+", default=[128, 64, 10], help="Number of neurons in each layer")
-    parser.add_argument("--activations", type=str, nargs="+", default=["relu", "relu", "softmax"], help="Activation functions for each layer")
+    parser.add_argument("--layers", type=int, nargs="+", default=[128, 64, 10], help="Number of neurons in each layer. Example: --layers 128 64 10")
+    parser.add_argument(
+        "--activations", type=str, nargs="+", default=["relu", "relu", "softmax"], help="Activation functions for each layer. Example: --activations relu relu softmax"
+    )
+    parser.add_argument("--learning_rate", type=float, default=0.04, help="Learning rate for gradient descent. Example: --learning_rate 0.01")
+    parser.add_argument("--max_iterations", type=int, default=100, help="Maximum number of iterations for training. Example: --max_iterations 200")
+    parser.add_argument("--tolerance", type=float, default=0.002, help="Tolerance for stopping criterion. Example: --tolerance 0.001")
 
     args = parser.parse_args()
+
+    # Validate arguments if necessary
+    if len(args.layers) != len(args.activations):
+        parser.error("Number of layers and number of activations must be the same")
+
     layers = args.layers
     activation_functions = args.activations
+    learning_rate = args.learning_rate
+    max_iterations = args.max_iterations
+    tolerance = args.tolerance
 
-    # Assuming features_train, labels_train, features_test, labels_test are already loaded
     parameters = run_architecture(features_train, labels_train, layers, activation_functions)
 
     predictions_test = predict(features_test, parameters, activation_functions)
@@ -235,12 +246,8 @@ if __name__ == "__main__":
     dashline = "-" * 40
     print(f"{dashline}\nAccuracy on test set: {accuracy * 100:.2f}%\n{dashline}")
 
-    predicted_label = predict_single_example(0, features_test, parameters, activation_functions)
-    print("Testing trained parameters on first sample of test dataset")
-    print(f"Labeled as: {labels_test[0]}, predicted as: {predicted_label}\n{dashline}")
-    plot_sample_prediction(0, features_test, labels_test, predicted_label)
-
-    predicted_label = predict_single_example(1, features_test, parameters, activation_functions)
-    print("Testing trained parameters on second sample of test dataset")
-    print(f"Labeled as: {labels_test[1]}, predicted as: {predicted_label}\n{dashline}")
-    plot_sample_prediction(1, features_test, labels_test, predicted_label)
+    for sample_index in range(3):
+        predicted_label = predict_single_example(sample_index, features_test, parameters, activation_functions)
+        print(f"Testing trained parameters on sample {sample_index + 1} of test dataset")
+        print(f"Labeled as: {labels_test[sample_index]}, predicted as: {predicted_label}\n{dashline}")
+        plot_sample_prediction(sample_index, features_test, labels_test, predicted_label)
