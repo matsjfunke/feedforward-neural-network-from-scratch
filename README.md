@@ -7,7 +7,7 @@
 
 **back propagation** (updating the network's weights by correcting its mistakes):   
 - [learning (hill-climb & gradient descent](./notes/learning-optimization.pdf)
-- [back propagation algorithm](./notes/backpropagation.pf)
+- [back propagation algorithm](./notes/backpropagation.pdf)
 
 # implementing  Neural Network:
 This project implements a simple neural network to classify handwritten numbers from the mnist dataset. 
